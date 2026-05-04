@@ -54,41 +54,43 @@ _G.isBarbell = function(name)
     return name:lower():find("barbell") ~= nil
 end
 
--- ==================== SERVER INFO ====================
+-- ==================== SERVER INFO (FIXED) ====================
 
 _G.GetServerInfo = function()
     local placeId = game.PlaceId
-    local jobId = ""
-    pcall(function() jobId = game.JobId end)
+    local jobId = game.JobId or "" -- Ensures it doesn't error if nil
     
-    local gameName = "Game"
+    local gameName = "Roblox-Game"
     pcall(function()
-        gameName = game:GetService("MarketplaceService"):GetProductInfo(placeId).Name
+        local info = game:GetService("MarketplaceService"):GetProductInfo(placeId)
+        if info and info.Name then
+            gameName = info.Name
+        end
     end)
     
-    local joinUrl = "https://www.roblox.com/games/" .. placeId
+    -- Ensure the base URL ends with a slash before the query parameters
+    local baseUrl = REDIRECT_PAGE_URL
+    if not baseUrl:find("/$") then baseUrl = baseUrl .. "/" end
+
     local redirectUrl = ""
-    
-    if jobId ~= "" then
-        local safeName = gameName:gsub("[^%w%s]", ""):gsub("%s+", "-")
-        redirectUrl = REDIRECT_PAGE_URL .. "?placeId=" .. placeId .. "&jobId=" .. jobId .. "&name=" .. _G.HttpService:UrlEncode(safeName)
-        joinUrl = "https://www.roblox.com/games/" .. placeId .. "/" .. safeName .. "?gameInstanceId=" .. jobId
+    local joinUrl = "https://www.roblox.com/games/" .. placeId
+
+    -- Only generate the specialized link if we have a valid JobId
+    if jobId ~= "" and jobId ~= " " then
+        local encodedName = _G.HttpService:UrlEncode(gameName)
+        redirectUrl = string.format("%s?placeId=%s&jobId=%s&name=%s", baseUrl, tostring(placeId), tostring(jobId), encodedName)
+        joinUrl = "https://www.roblox.com/games/" .. placeId .. "/" .. encodedName .. "?gameInstanceId=" .. jobId
+    else
+        -- Fallback for Studio or failed JobId fetch
+        redirectUrl = baseUrl .. "?placeId=" .. placeId
     end
     
     local teleportScript = ""
     if jobId ~= "" then
-        teleportScript = string.format("```lua\ngame:GetService('TeleportService'):TeleportToPlaceInstance(%d, '%s')\n```", placeId, jobId)
-    end
-    
-    return {
-        placeId = placeId,
-        jobId = jobId,
-        gameName = gameName,
-        joinUrl = joinUrl,
-        redirectUrl = redirectUrl,
-        teleportScript = teleportScript
-    }
-end
+        teleportScript = "
+http://googleusercontent.com/immersive_entry_chip/0
+
+Now, when you click the **"Click Here"** link in your Discord Webhook, it will open your Vercel page, which will immediately trigger the `roblox://` protocol to launch the specific server.
 
 -- ==================== GIFT REMOTE ====================
 
